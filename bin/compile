@@ -35,11 +35,6 @@ DIESEL_FLAGS=""
 # Default build flags to pass to `cargo build`.
 RUST_CARGO_BUILD_FLAGS="--release"
 
-# Load our toolchain configuration, if any was specified.
-if [ -f "$BUILD_DIR/rust-toolchain" ]; then
-    VERSION="$(cat "$BUILD_DIR/rust-toolchain")"
-fi
-
 # Load our configuration variables, if any were specified.
 if [ -f "$BUILD_DIR/RustConfig" ]; then
     . "$BUILD_DIR/RustConfig"
@@ -47,12 +42,6 @@ fi
 
 # Standard paranoia.
 set -eu
-
-# Check our configuration options.
-if [ -z ${VERSION+x} ]; then
-  >&2 echo "failed: must set VERSION with rust-toolchain or RustConfig to indicate the Rust version."
-  exit 1
-fi
 
 # Notify users running old, unstable versions of Rust about how to deploy
 # successfully.
@@ -102,17 +91,16 @@ cd "$CACHE_DIR"
 
 # Make sure we have an appropriate Rust toolchain installed.
 if [ -d "$CARGO_HOME" ]; then
-    echo "-----> Checking for new releases of Rust $VERSION channel"
+    echo "-----> Checking for new releases of Rust channel"
     # It's possible that $VERSION has changed, or the `stable` channel has updated.
     rustup self update
-    rustup update "$VERSION"
-    rustup default "$VERSION"
+    rustup update
 else
     echo "-----> Downloading rustup"
     curl https://sh.rustup.rs -sSf > rustup.sh
     chmod u+x rustup.sh
-    echo "-----> Using rustup to install Rust channel $VERSION"
-    ./rustup.sh -y --default-toolchain "$VERSION"
+    echo "-----> Using rustup to install Rust channel"
+    ./rustup.sh -y
     rm rustup.sh
 fi
 if [ ! -x "$CARGO_HOME/bin/rustc" ]; then
